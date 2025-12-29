@@ -18,6 +18,26 @@
             padding: 20px;
         }
 
+        .login-screen {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-screen input {
+            padding: 10px;
+            width: 220px;
+        }
+
+        .login-screen button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -517,37 +537,53 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📋 Task for today</h1>
-        
-        <div class="input-section">
-            <input 
-                type="text" 
-                id="taskInput" 
-                placeholder="Just do it ..." 
-                autocomplete="off"
-            >
-            <button onclick="addMainTask()">Add new task</button>
-        </div>
+    <div id="loginScreen" class="login-screen">
+            <h2>Enter the tasklist</h2>
 
-        <ul class="task-list" id="taskList"></ul>
-        <div class="empty-state" id="emptyState">
-            Let do somthing for today my babi gơ...
-        </div>
-    </div>
+            <input id="codeInput" placeholder="user name" />
+            <input id="passwordInput" placeholder="code" />
 
-    <div class="confirm-overlay" id="confirmOverlay">
-        <div class="confirm-box">
-            <h2>Delect this task</h2>
-            <p id="confirmMessage">Are you sure to delect this one?</p>
-            <div class="confirm-buttons">
-                <button class="confirm-btn-cancel" onclick="cancelDelete()">Cancel</button>
-                <button class="confirm-btn-delete" onclick="confirmDelete()">Finish it</button>
+            <button onclick="login()">truy cập</button>
             </div>
-        </div>
-    </div>
 
+            <div id="app" style="display: none;">
+                <div class="container">
+                    <h1>📋 Task for today</h1>
+                    
+                    <div class="input-section">
+                        <input 
+                            type="text" 
+                            id="taskInput" 
+                            placeholder="Just do it ..." 
+                            autocomplete="off"
+                        >
+                        <button onclick="addMainTask()">Add new task</button>
+                    </div>
+
+                    <ul class="task-list" id="taskList"></ul>
+                    <div class="empty-state" id="emptyState">
+                        Let do somthing for today my babi gơ...
+                    </div>
+                </div>
+
+                <div class="confirm-overlay" id="confirmOverlay">
+                    <div class="confirm-box">
+                        <h2>Delect this task</h2>
+                        <p id="confirmMessage">Are you sure to delect this one?</p>
+                        <div class="confirm-buttons">
+                            <button class="confirm-btn-cancel" onclick="cancelDelete()">Cancel</button>
+                            <button class="confirm-btn-delete" onclick="confirmDelete()">Finish it</button>
+                        </div>
+                    </div>
+                </div>
+    </div>
+    
     <script>
+        document.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    login();
+                }
+        });
         let tasks = [];
         let taskIdCounter = 0;
         let draggedTask = null;
@@ -555,17 +591,35 @@
         let pendingDeleteId = null;
         let pendingDeleteParentId = null;
         let pendingDeleteType = null;
-        const USER_KEY = 'tasklist_quan';
+        const USER_KEY = 'tasklist_linh';
+        let storageKey = "";
+
+        function login() {
+            const code = document.getElementById("codeInput").value.trim();
+            const password = document.getElementById("passwordInput").value.trim();
+
+            if (!code || !password) {
+                alert("nhập đủ mã và mật khẩu");
+                return;
+            }
+
+            storageKey = `tasklist_${code}_${password}`;
+
+            loadTasks();
+
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("app").style.display = "block";
+        }
+
 
         function saveTasks() {
-            localStorage.setItem(USER_KEY, JSON.stringify(tasks));
+            localStorage.setItem(storageKey, JSON.stringify(tasks));
         }
 
         function loadTasks() {
-            const saved = localStorage.getItem(USER_KEY);
-            if (saved) {
-                tasks = JSON.parse(saved);
-            }
+            const data = localStorage.getItem(storageKey);
+            tasks = data ? JSON.parse(data) : [];
+            renderTasks();
         }
 
         function addMainTask() {
