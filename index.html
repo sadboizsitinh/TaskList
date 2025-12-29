@@ -544,6 +544,7 @@
             <input id="passwordInput" placeholder="code" />
 
             <button onclick="login()">Enter</button>
+            
             </div>
 
             <div id="app" style="display: none;">
@@ -579,11 +580,6 @@
     </div>
     
     <script>
-        document.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    login();
-                }
-        });
         let tasks = [];
         let taskIdCounter = 0;
         let draggedTask = null;
