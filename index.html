@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Task Phân cấp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            padding: 15px;
+            background: #fffacd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            border-left: 4px solid #ffc107;
+            border: 1px solid #000;
+            border-left: 4px solid #ffc107;
+        }
+
+        .task-item.completed {
+            background: #1a3a2e;
+            border-left-color: #0d1f18;
+            border-color: #000;
+        }
+
+        .task-item.completed .task-label {
+            color: #90ee90;
+        }
+
+        .task-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-wrapper {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+            min-width: 24px;
+            min-height: 24px;
+        }
+
+        input[type="checkbox"]:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .task-label {
+            flex: 1;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+            word-break: break-word;
+            min-width: 150px;
+        }
+
+        .task-item.completed .task-label {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .subtask-item.completed .task-label {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .lock-icon {
+            font-size: 20px;
+            margin-left: 8px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 6px;
+            margin-left: auto;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .btn-add-subtask, .btn-delete {
+            padding: 6px 10px;
+            font-size: 12px;
+            background: #f0f0f0;
+            color: #666;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            min-width: fit-content;
+        }
+
+        .btn-add-subtask:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .btn-add-subtask:active {
+            background: #5568d3;
+            transform: scale(0.95);
+        }
+
+        .btn-delete:hover {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+
+        .btn-delete:active {
+            background: #c0392b;
+            transform: scale(0.95);
+        }
+
+        .subtasks {
+            margin-top: 15px;
+            margin-left: 40px;
+            padding-left: 15px;
+            border-left: 2px dashed #ccc;
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .subtasks:not(.show) {
+            max-height: 0;
+        }
+
+        .toggle-subtasks {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            background: #f0f0f0;
+            color: #666;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .toggle-subtasks:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .subtask-item {
+            padding: 12px;
+            background: #fffacd;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ffc107;
+            transition: all 0.3s;
+            border: 1px solid #000;
+            border-left: 3px solid #ffc107;
+        }
+
+        .subtask-item.completed {
+            background: #1a3a2e;
+            border-left-color: #0d1f18;
+            border-color: #000;
+        }
+
+        .subtask-item.completed .task-label {
+            color: #90ee90;
+        }
+
+        .subtask-input-wrapper {
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 3px solid #9c27b0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .subtask-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #9c27b0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .subtask-input:focus {
+            outline: none;
+            border-color: #7b1fa2;
+        }
+
+        .btn-save, .btn-cancel {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .btn-save:hover {
+            background: #45a049;
+        }
+
+        .btn-cancel {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+
+        .btn-cancel:hover {
+            background: #da190b;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-size: 16px;
+        }
+
+        .parent-locked {
+            background: #e0e0e0;
+            border-left-color: #888;
+            border-color: #888;
+        }
+
+        .parent-locked .task-label {
+            color: #5a5a5a;
+        }
+
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .confirm-overlay.show {
+            display: flex;
+        }
+
+        .confirm-box {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .confirm-box h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .confirm-box p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .confirm-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            min-width: 100px;
+        }
+
+        .confirm-btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .confirm-btn-delete:hover {
+            background: #c0392b;
+        }
+
+        .confirm-btn-cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .confirm-btn-cancel:hover {
+            background: #ddd;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .input-section {
+                flex-direction: column;
+            }
+
+            .input-section button {
+                padding: 12px 16px;
+            }
+
+            .task-item {
+                padding: 12px;
+                margin-bottom: 8px;
+            }
+
+            .task-content {
+                gap: 8px;
+            }
+
+            .task-label {
+                font-size: 14px;
+                min-width: 100px;
+            }
+
+            .lock-icon {
+                font-size: 18px;
+                margin-left: 4px;
+            }
+
+            .task-actions {
+                gap: 4px;
+                margin-top: 8px;
+                width: 100%;
+                order: 3;
+            }
+
+            .btn-add-subtask, .btn-delete {
+                padding: 8px 12px;
+                font-size: 12px;
+                flex: 1;
+                min-width: 50px;
+                touch-action: manipulation;
+            }
+
+            .toggle-subtasks {
+                padding: 8px;
+                width: 32px;
+                height: 32px;
+                min-width: 32px;
+                min-height: 32px;
+                touch-action: manipulation;
+            }
+
+            .subtasks {
+                margin-left: 20px;
+                padding-left: 12px;
+            }
+
+            .subtask-item {
+                padding: 10px;
+                margin-bottom: 6px;
+            }
+
+            .subtask-input {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .btn-save, .btn-cancel {
+                padding: 8px 12px;
+                font-size: 12px;
+                flex: 1;
+                min-width: 50px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            .task-item {
+                padding: 10px;
+            }
+
+            .task-label {
+                font-size: 13px;
+                min-width: 80px;
+            }
+
+            .btn-add-subtask, .btn-delete {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .subtasks {
+                margin-left: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Task for today</h1>
+        
+        <div class="input-section">
+            <input 
+                type="text" 
+                id="taskInput" 
+                placeholder="Just do it ..." 
+                autocomplete="off"
+            >
+            <button onclick="addMainTask()">Add new task</button>
+        </div>
+
+        <ul class="task-list" id="taskList"></ul>
+        <div class="empty-state" id="emptyState">
+            Let do somthing for today my babi gơ...
+        </div>
+    </div>
+
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <h2>Delect this task</h2>
+            <p id="confirmMessage">Are you sure to delect this one?</p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn-cancel" onclick="cancelDelete()">Cancel</button>
+                <button class="confirm-btn-delete" onclick="confirmDelete()">Finish it</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let taskIdCounter = 0;
+        let draggedTask = null;
+        let draggedParentId = null;
+        let pendingDeleteId = null;
+        let pendingDeleteParentId = null;
+        let pendingDeleteType = null;
+        const USER_KEY = 'tasklist_quan';
+
+        function saveTasks() {
+            localStorage.setItem(USER_KEY, JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            const saved = localStorage.getItem(USER_KEY);
+            if (saved) {
+                tasks = JSON.parse(saved);
+            }
+        }
+
+        function addMainTask() {
+            const input = document.getElementById('taskInput');
+            const taskName = input.value.trim();
+
+            if (!taskName) {
+                alert('Vui lòng nhập tên task!');
+                return;
+            }
+
+            const task = {
+                id: taskIdCounter++,
+                name: taskName,
+                completed: false,
+                subtasks: []
+            };
+
+            tasks.push(task);
+            input.value = '';
+            saveTasks();
+            renderTasks();
+        }
+
+        function addSubtask(parentId) {
+            const parentTask = findTaskById(parentId);
+            if (!parentTask) return;
+
+            parentTask.subtasks.push({
+                id: taskIdCounter++,
+                name: '',
+                completed: false,
+                subtasks: [],
+                isEditing: true
+            });
+
+            renderTasks();
+
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('.subtask-input');
+                const lastInput = inputs[inputs.length - 1];
+                if (lastInput) lastInput.focus();
+            }, 0);
+
+            saveTasks();
+        }
+
+        function saveSubtask(parentId, subtaskId, inputEl) {
+            const parentTask = findTaskById(parentId);
+            if (!parentTask) return;
+
+            const subtask = parentTask.subtasks.find(s => s.id === subtaskId);
+            if (!subtask) return;
+
+            const name = inputEl.value.trim();
+            if (!name) {
+                parentTask.subtasks = parentTask.subtasks.filter(s => s.id !== subtaskId);
+            } else {
+                subtask.name = name;
+                subtask.isEditing = false;
+            }
+            saveTasks();
+            renderTasks();
+        }
+
+        function cancelSubtask(parentId, subtaskId) {
+            const parentTask = findTaskById(parentId);
+            if (parentTask) {
+                parentTask.subtasks = parentTask.subtasks.filter(s => s.id !== subtaskId);
+                renderTasks();
+            }
+            saveTasks();
+        }
+
+        function deleteTask(taskId) {
+            pendingDeleteId = taskId;
+            pendingDeleteParentId = null;
+            pendingDeleteType = 'task';
+            showConfirmDialog();
+            saveTasks();
+        }
+
+        function deleteSubtask(parentId, subtaskId) {
+            pendingDeleteId = subtaskId;
+            pendingDeleteParentId = parentId;
+            pendingDeleteType = 'subtask';
+            showConfirmDialog();
+            saveTasks();
+        }
+
+        function showConfirmDialog() {
+            document.getElementById('confirmOverlay').classList.add('show');
+        }
+
+        function cancelDelete() {
+            document.getElementById('confirmOverlay').classList.remove('show');
+            pendingDeleteId = null;
+            pendingDeleteParentId = null;
+            pendingDeleteType = null;
+        }
+
+        function confirmDelete() {
+            if (pendingDeleteType === 'task') {
+                tasks = tasks.filter(t => t.id !== pendingDeleteId);
+            } else if (pendingDeleteType === 'subtask') {
+                const parentTask = findTaskById(pendingDeleteParentId);
+                if (parentTask) {
+                    parentTask.subtasks = parentTask.subtasks.filter(s => s.id !== pendingDeleteId);
+                }
+            }
+            document.getElementById('confirmOverlay').classList.remove('show');
+            pendingDeleteId = null;
+            pendingDeleteParentId = null;
+            pendingDeleteType = null;
+            renderTasks();
+        }
+
+        function toggleSubtask(parentId, subtaskId) {
+            const parentTask = findTaskById(parentId);
+            if (!parentTask) return;
+            
+            const subtask = parentTask.subtasks.find(s => s.id === subtaskId);
+            if (!subtask) return;
+
+            // Chỉ cho toggle nếu tất cả con đã hoàn thành hoặc không có con
+            const hasSubtasks = subtask.subtasks && subtask.subtasks.length > 0;
+            const allSubtasksCompleted = !hasSubtasks || subtask.subtasks.every(s => s.completed);
+            
+            if (allSubtasksCompleted) {
+                subtask.completed = !subtask.completed;
+            }
+            
+            // Nếu bất kỳ subtask nào chưa hoàn thành, task cha phải tắt tick
+            const allParentSubtasksCompleted = parentTask.subtasks.every(s => s.completed);
+            if (!allParentSubtasksCompleted && parentTask.completed) {
+                parentTask.completed = false;
+            }
+
+            saveTasks();
+            renderTasks();
+        }
+
+        function toggleMainTask(taskId) {
+            const task = findTaskById(taskId);
+            if (task) {
+                const allSubtasksCompleted = task.subtasks.length === 0 || 
+                    task.subtasks.every(s => s.completed);
+
+                if (allSubtasksCompleted) {
+                    task.completed = !task.completed;
+                    renderTasks();
+                }
+            }
+        }
+
+        function findTaskById(taskId, taskList = tasks) {
+            for (let task of taskList) {
+                if (task.id === taskId) return task;
+                const found = findTaskById(taskId, task.subtasks);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function areAllSubtasksCompleted(task) {
+            return task.subtasks.length === 0 || task.subtasks.every(s => s.completed);
+        }
+
+        function toggleShowSubtasks(subtasksEl) {
+            subtasksEl.classList.toggle('show');
+        }
+
+        function swapTasks(index1, index2) {
+            [tasks[index1], tasks[index2]] = [tasks[index2], tasks[index1]];
+        }
+
+        function setupDragAndDrop(taskEl, taskId) {
+            taskEl.draggable = true;
+
+            taskEl.addEventListener('dragstart', (e) => {
+                draggedTask = taskId;
+                draggedParentId = null;
+                taskEl.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            taskEl.addEventListener('dragend', () => {
+                taskEl.classList.remove('dragging');
+                document.querySelectorAll('.drag-over').forEach(el => {
+                    el.classList.remove('drag-over');
+                });
+            });
+
+            taskEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                taskEl.classList.add('drag-over');
+            });
+
+            taskEl.addEventListener('dragleave', (e) => {
+                if (e.target === taskEl) {
+                    taskEl.classList.remove('drag-over');
+                }
+            });
+
+            taskEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                taskEl.classList.remove('drag-over');
+
+                if (draggedTask === null || draggedTask === taskId) {
+                    draggedTask = null;
+                    draggedParentId = null;
+                    return;
+                }
+
+                // Chỉ swap khi cả hai đều là main task (không có cha)
+                if (draggedParentId === null) {
+                    const draggedIndex = tasks.findIndex(t => t.id === draggedTask);
+                    const targetIndex = tasks.findIndex(t => t.id === taskId);
+                    
+                    if (draggedIndex !== -1 && targetIndex !== -1) {
+                        swapTasks(draggedIndex, targetIndex);
+                        renderTasks();
+                    }
+                }
+
+                draggedTask = null;
+                draggedParentId = null;
+            });
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            const emptyState = document.getElementById('emptyState');
+
+            taskList.innerHTML = '';
+
+            if (tasks.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            tasks.forEach(task => {
+                renderTaskItem(task, taskList, null);
+            });
+        }
+
+        function renderTaskItem(task, parentEl, parentId) {
+            const hasSubtasks = task.subtasks.length > 0;
+            const allSubtasksCompleted = areAllSubtasksCompleted(task);
+            const isLocked = hasSubtasks && !allSubtasksCompleted;
+
+            const taskEl = document.createElement('li');
+            taskEl.className = `task-item ${task.completed ? 'completed' : ''} ${isLocked ? 'parent-locked' : ''}`;
+            taskEl.draggable = parentId === null;
+
+            let subtasksHTML = '';
+            if (hasSubtasks) {
+                subtasksHTML = `<div class="subtasks show" data-parent-id="${task.id}"></div>`;
+            }
+
+            taskEl.innerHTML = `
+                <div class="task-content">
+                    <div class="checkbox-wrapper">
+                        <input 
+                            type="checkbox" 
+                            ${task.completed ? 'checked' : ''}
+                            ${isLocked ? 'disabled' : ''}
+                            data-task-id="${task.id}"
+                        >
+                    </div>
+                    <label class="task-label">${escapeHtml(task.name)}</label>
+                    ${hasSubtasks ? `<span class="lock-icon">${isLocked ? '🔒' : '🔓'}</span>` : ''}
+                    <div class="task-actions">
+                        <button class="btn-add-subtask" data-task-id="${task.id}">+ Subtask</button>
+                        ${hasSubtasks ? `<button class="toggle-subtasks" data-task-id="${task.id}">▼</button>` : ''}
+                        <button class="btn-delete" data-task-id="${task.id}">Delete</button>
+                    </div>
+                </div>
+                ${subtasksHTML}
+            `;
+
+            parentEl.appendChild(taskEl);
+
+            taskEl.querySelector('input[type="checkbox"]').addEventListener('change', () => {
+                toggleMainTask(task.id);
+            });
+
+            taskEl.querySelector('.btn-add-subtask').addEventListener('click', function() {
+                addSubtask(task.id);
+            });
+
+            taskEl.querySelector('.btn-delete').addEventListener('click', function() {
+                deleteTask(task.id);
+            });
+
+            // Thêm event cho nút toggle nếu có subtask
+            if (hasSubtasks) {
+                const toggleBtn = taskEl.querySelector('.toggle-subtasks');
+                const subtasksContainer = taskEl.querySelector('.subtasks');
+                
+                if (toggleBtn && subtasksContainer) {
+                    toggleBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        toggleShowSubtasks(subtasksContainer);
+                        toggleBtn.textContent = subtasksContainer.classList.contains('show') ? '▼' : '▶';
+                    });
+                }
+            }
+
+            // Chỉ setup drag-drop cho main task (không có cha)
+            if (parentId === null) {
+                setupDragAndDrop(taskEl, task.id);
+            }
+
+            if (hasSubtasks) {
+                const subtasksContainer = taskEl.querySelector('.subtasks');
+                task.subtasks.forEach(subtask => {
+                    renderSubtaskItem(subtask, subtasksContainer, task.id);
+                });
+            }
+        }
+
+        function renderSubtaskItem(subtask, parentEl, parentId) {
+            const hasSubtasks = subtask.subtasks && subtask.subtasks.length > 0;
+            const allSubtasksCompleted = subtask.subtasks && areAllSubtasksCompleted(subtask);
+            const isLocked = hasSubtasks && !allSubtasksCompleted;
+
+            if (subtask.isEditing) {
+                const wrapperEl = document.createElement('div');
+                wrapperEl.className = 'subtask-input-wrapper';
+                wrapperEl.innerHTML = `
+                    <input 
+                        type="text" 
+                        class="subtask-input" 
+                        placeholder="Fill me pls..."
+                        value="${escapeHtml(subtask.name)}"
+                    >
+                    <button class="btn-save" data-subtask-id="${subtask.id}" data-parent-id="${parentId}">Lưu</button>
+                    <button class="btn-cancel" data-subtask-id="${subtask.id}" data-parent-id="${parentId}">Hủy</button>
+                `;
+
+                wrapperEl.querySelector('.btn-save').addEventListener('click', function() {
+                    const input = wrapperEl.querySelector('.subtask-input');
+                    saveSubtask(parentId, subtask.id, input);
+                });
+
+                wrapperEl.querySelector('.btn-cancel').addEventListener('click', function() {
+                    cancelSubtask(parentId, subtask.id);
+                });
+
+                const input = wrapperEl.querySelector('.subtask-input');
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        saveSubtask(parentId, subtask.id, input);
+                    }
+                    if (e.key === 'Escape') {
+                        cancelSubtask(parentId, subtask.id);
+                    }
+                });
+
+                parentEl.appendChild(wrapperEl);
+            } else {
+                const subtaskEl = document.createElement('div');
+                subtaskEl.className = `subtask-item ${subtask.completed ? 'completed' : ''} ${isLocked ? 'parent-locked' : ''}`;
+
+                let nestedSubtasksHTML = '';
+                if (hasSubtasks) {
+                    nestedSubtasksHTML = `<div class="subtasks show" data-parent-id="${subtask.id}"></div>`;
+                }
+
+                subtaskEl.innerHTML = `
+                    <div class="task-content">
+                        <div class="checkbox-wrapper">
+                            <input 
+                                type="checkbox" 
+                                ${subtask.completed ? 'checked' : ''}
+                                ${isLocked ? 'disabled' : ''}
+                                data-subtask-id="${subtask.id}"
+                            >
+                        </div>
+                        <label class="task-label">${escapeHtml(subtask.name)}</label>
+                        ${hasSubtasks ? `<span class="lock-icon">${isLocked ? '🔒' : '🔓'}</span>` : ''}
+                        <div class="task-actions">
+                            <button class="btn-add-subtask" data-subtask-id="${subtask.id}" data-parent-id="${parentId}">+ Subtask</button>
+                            ${hasSubtasks ? `<button class="toggle-subtasks" data-subtask-id="${subtask.id}">▼</button>` : ''}
+                            <button class="btn-delete" data-subtask-id="${subtask.id}" data-parent-id="${parentId}">Delete</button>
+                        </div>
+                    </div>
+                    ${nestedSubtasksHTML}
+                `;
+
+                parentEl.appendChild(subtaskEl);
+
+                subtaskEl.querySelector('input[type="checkbox"]').addEventListener('change', () => {
+                    toggleSubtask(parentId, subtask.id);
+                });
+
+                subtaskEl.querySelector('.btn-add-subtask').addEventListener('click', function() {
+                    const taskId = parseInt(this.dataset.subtaskId);
+                    addSubtask(taskId);
+                });
+
+                subtaskEl.querySelector('.btn-delete').addEventListener('click', function() {
+                    const taskId = parseInt(this.dataset.subtaskId);
+                    deleteSubtask(parentId, taskId);
+                });
+
+                // Thêm event cho nút toggle
+                if (hasSubtasks) {
+                    const toggleBtn = subtaskEl.querySelector('.toggle-subtasks');
+                    if (toggleBtn) {
+                        const nestedContainer = subtaskEl.querySelector('.subtasks');
+                        
+                        toggleBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            toggleShowSubtasks(nestedContainer);
+                            toggleBtn.textContent = nestedContainer.classList.contains('show') ? '▼' : '▶';
+                        });
+                    }
+
+                    const nestedContainer = subtaskEl.querySelector('.subtasks');
+                    subtask.subtasks.forEach(nestedSubtask => {
+                        renderSubtaskItem(nestedSubtask, nestedContainer, subtask.id);
+                    });
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addMainTask();
+            }
+        });
+
+        // renderTasks();
+        loadTasks();
+        renderTasks();
+    </script>
+</body>
+</html>
